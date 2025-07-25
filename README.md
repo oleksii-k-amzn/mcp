@@ -15,7 +15,6 @@ A suite of specialized MCP servers that help you get the most out of AWS, wherev
   - [Server Sent Events Support Removal](#server-sent-events-support-removal)
   - [Why AWS MCP Servers?](#why-aws-mcp-servers)
   - [Available MCP Servers: Quick Installation](#available-mcp-servers-quick-installation)
-  - [Available MCP Servers: Quick Installation](#available-mcp-servers-quick-installation)
     - [🚀Getting Started with AWS](#-getting-started-with-aws)
     - [Browse by What You're Building](#browse-by-what-youre-building)
       - [📚 Real-time access to official AWS documentation](#-real-time-access-to-official-aws-documentation)
@@ -112,7 +111,6 @@ MCP servers enhance the capabilities of foundation models (FMs) in several key w
 
 - **Specialized Domain Knowledge**: MCP servers provide deep, contextual knowledge about AWS services that might not be fully represented in foundation models' training data, enabling more accurate and helpful responses for cloud development tasks.
 
-## Available MCP Servers: Quick Installation
 ## Available MCP Servers: Quick Installation
 
 Get started quickly with one-click installation buttons for popular MCP clients. Click the buttons below to install servers directly in Cursor or VS Code:
