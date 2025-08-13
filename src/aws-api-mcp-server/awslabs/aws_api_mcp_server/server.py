@@ -13,8 +13,6 @@
 # limitations under the License.
 
 import os
-import sys
-from .core.agent_scripts.manager import AGENT_SCRIPTS_MANAGER
 from .core.aws.driver import translate_cli_to_ir
 from .core.aws.service import (
     execute_awscli_customization,
@@ -23,6 +21,7 @@ from .core.aws.service import (
     request_consent,
     validate,
 )
+from .core.common import initialize_logger
 from .core.common.config import (
     DEFAULT_REGION,
     ENABLE_AGENT_SCRIPTS,
@@ -34,7 +33,6 @@ from .core.common.config import (
     REQUIRE_MUTATION_CONSENT,
     TRANSPORT,
     WORKING_DIRECTORY,
-    get_server_directory,
 )
 from .core.common.errors import AwsApiMcpError
 from .core.common.helpers import validate_aws_region
@@ -53,16 +51,8 @@ from pydantic import Field
 from typing import Annotated, Any, Optional
 
 
-logger.remove()
-logger.add(sys.stderr, level=FASTMCP_LOG_LEVEL)
-
-# Add file sink
-log_dir = get_server_directory()
-log_dir.mkdir(exist_ok=True)
-log_file = log_dir / 'aws-api-mcp-server.log'
-logger.add(log_file, rotation='10 MB', retention='7 days')
-
-server = FastMCP(name='AWS-API-MCP', log_level=FASTMCP_LOG_LEVEL, host=HOST, port=PORT)
+initialize_logger()
+server = FastMCP(name='AWS-API-MCP', log_level=FASTMCP_LOG_LEVEL)
 READ_OPERATIONS_INDEX: Optional[ReadOnlyOperations] = None
 
 
@@ -363,7 +353,8 @@ def main():
     if READ_OPERATIONS_ONLY_MODE or REQUIRE_MUTATION_CONSENT:
         READ_OPERATIONS_INDEX = get_read_only_operations()
 
-    server.run(transport=TRANSPORT)
+    logger.info('Server is ready to accept requests.')
+    server.run(transport='stdio')
 
 
 if __name__ == '__main__':

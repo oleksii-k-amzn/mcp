@@ -270,6 +270,15 @@ This MCP server executes AWS CLI commands as instructed by an AI model, which ca
 
 Logs of the MCP server are stored in the system's temporary directory, under **aws-api-mcp** subfolder - on Windows and macOS, this is the system temp directory, while on Linux it uses `XDG_RUNTIME_DIR`, `TMPDIR`, or `/tmp` as fallback. The logs contain MCP server operational data including command executions, errors, and debugging information to help users monitor and perform forensics of the MCP server.
 
+If you want logs in CloudWatch Logs, set the environment variable `AWS_API_MCP_CLOUDWATCH_LOG_GROUP` to your desired log group name. Example MCP client config env section:
+
+```json
+"env": {
+  "AWS_REGION": "us-east-1",
+  "AWS_API_MCP_CLOUDWATCH_LOG_GROUP": "/aws/mcp/aws-api-mcp-server"
+}
+```
+
 ### Security Best Practices
 
 - **Principle of Least Privilege**: While the examples above use AWS managed policies like `AdministratorAccess` and `ReadOnlyAccess` for simplicity, we **strongly** recommend following the principle of least privilege by creating custom policies tailored to your specific use case.
