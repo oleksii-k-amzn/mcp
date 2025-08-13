@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import os
+from .core.agent_scripts.manager import AGENT_SCRIPTS_MANAGER
 from .core.aws.driver import translate_cli_to_ir
 from .core.aws.service import (
     execute_awscli_customization,
