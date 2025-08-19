@@ -15,6 +15,8 @@
 import boto3
 import threading
 import time
+from ..aws.credentials import get_local_credentials
+from ..common.config import AWS_API_MCP_PROFILE_NAME
 from botocore.exceptions import ClientError
 from loguru import logger
 from typing import Optional
@@ -35,7 +37,16 @@ class CloudWatchLogSink:
         self.region_name = region_name
         self.lock = threading.Lock()
         self.sequence_token: Optional[str] = None
-        self.client = boto3.client('logs', region_name=region_name)
+
+        credentials = get_local_credentials(profile=AWS_API_MCP_PROFILE_NAME)
+
+        self.client = boto3.client(
+            'logs',
+            region_name=region_name,
+            aws_access_key_id=credentials.access_key_id,
+            aws_secret_access_key=credentials.secret_access_key,
+            aws_session_token=credentials.session_token,
+        )
 
         self.log_stream_name = f'aws-api-mcp-server-{str(int(time.time()))}'
 

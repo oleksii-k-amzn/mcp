@@ -24,9 +24,30 @@ def mock_boto3_client():
         yield mock_client
 
 
+@pytest.fixture
+def mock_credentials():
+    """Mock AWS credentials."""
+    from awslabs.aws_api_mcp_server.core.common.models import Credentials
+
+    mock_creds = Credentials(
+        access_key_id='test-access-key',  # pragma: allowlist secret
+        secret_access_key='test-secret-key',  # pragma: allowlist secret
+        session_token='test-session-token',  # pragma: allowlist secret
+    )
+
+    with patch(
+        'awslabs.aws_api_mcp_server.core.common.cloudwatch_logger.get_local_credentials'
+    ) as mock_get_creds:
+        mock_get_creds.return_value = mock_creds
+        yield mock_get_creds
+
+
 @patch('time.time', return_value=1234567890)
-def test_initialization(mock_time, mock_boto3_client, mock_loguru):
+def test_initialization(mock_time, mock_boto3_client, mock_loguru, mock_credentials):
     """Test CloudWatchLogSink initialization."""
+    credentials = mock_credentials()
+    mock_credentials.reset_mock()
+
     with patch('awslabs.aws_api_mcp_server.core.common.cloudwatch_logger.boto3') as mock_boto3:
         mock_client = Mock()
         mock_boto3.client.return_value = mock_client
@@ -38,11 +59,21 @@ def test_initialization(mock_time, mock_boto3_client, mock_loguru):
     assert sink.region_name == 'us-east-1'
     assert sink.log_stream_name == 'aws-api-mcp-server-1234567890'
     assert sink.sequence_token is None
-    mock_boto3.client.assert_called_once_with('logs', region_name='us-east-1')
+
+    mock_boto3.client.assert_called_once_with(
+        'logs',
+        region_name='us-east-1',
+        aws_access_key_id=credentials.access_key_id,
+        aws_secret_access_key=credentials.secret_access_key,
+        aws_session_token=credentials.session_token,
+    )
+    mock_credentials.assert_called_once()
 
 
 @patch('time.time', return_value=1234567890)
-def test_ensure_log_group_exists_already_exists(mock_time, mock_boto3_client, mock_loguru):
+def test_ensure_log_group_exists_already_exists(
+    mock_time, mock_boto3_client, mock_loguru, mock_credentials
+):
     """Test log group creation when it already exists."""
     with patch('awslabs.aws_api_mcp_server.core.common.cloudwatch_logger.boto3') as mock_boto3:
         mock_client = Mock()
@@ -58,7 +89,9 @@ def test_ensure_log_group_exists_already_exists(mock_time, mock_boto3_client, mo
 
 
 @patch('time.time', return_value=1234567890)
-def test_ensure_log_group_exists_access_denied(mock_time, mock_boto3_client, mock_loguru):
+def test_ensure_log_group_exists_access_denied(
+    mock_time, mock_boto3_client, mock_loguru, mock_credentials
+):
     """Test log group creation with access denied."""
     with patch('awslabs.aws_api_mcp_server.core.common.cloudwatch_logger.boto3') as mock_boto3:
         mock_client = Mock()
@@ -76,7 +109,9 @@ def test_ensure_log_group_exists_access_denied(mock_time, mock_boto3_client, moc
 
 
 @patch('time.time', return_value=1234567890)
-def test_ensure_log_group_exists_other_error(mock_time, mock_boto3_client, mock_loguru):
+def test_ensure_log_group_exists_other_error(
+    mock_time, mock_boto3_client, mock_loguru, mock_credentials
+):
     """Test log group creation with other error."""
     with patch('awslabs.aws_api_mcp_server.core.common.cloudwatch_logger.boto3') as mock_boto3:
         mock_client = Mock()
@@ -94,7 +129,7 @@ def test_ensure_log_group_exists_other_error(mock_time, mock_boto3_client, mock_
 
 
 @patch('time.time', return_value=1234567890)
-def test_ensure_log_stream_exists_success(mock_time, mock_boto3_client):
+def test_ensure_log_stream_exists_success(mock_time, mock_boto3_client, mock_credentials):
     """Test successful log stream creation."""
     with patch('awslabs.aws_api_mcp_server.core.common.cloudwatch_logger.boto3') as mock_boto3:
         mock_client = Mock()
@@ -109,7 +144,9 @@ def test_ensure_log_stream_exists_success(mock_time, mock_boto3_client):
 
 
 @patch('time.time', return_value=1234567890)
-def test_ensure_log_stream_exists_already_exists(mock_time, mock_boto3_client, mock_loguru):
+def test_ensure_log_stream_exists_already_exists(
+    mock_time, mock_boto3_client, mock_loguru, mock_credentials
+):
     """Test log stream creation when it already exists."""
     with patch('awslabs.aws_api_mcp_server.core.common.cloudwatch_logger.boto3') as mock_boto3:
         mock_client = Mock()
@@ -127,7 +164,9 @@ def test_ensure_log_stream_exists_already_exists(mock_time, mock_boto3_client, m
 
 
 @patch('time.time', return_value=1234567890)
-def test_ensure_log_stream_exists_access_denied(mock_time, mock_boto3_client, mock_loguru):
+def test_ensure_log_stream_exists_access_denied(
+    mock_time, mock_boto3_client, mock_loguru, mock_credentials
+):
     """Test log stream creation with access denied."""
     with patch('awslabs.aws_api_mcp_server.core.common.cloudwatch_logger.boto3') as mock_boto3:
         mock_client = Mock()
@@ -145,7 +184,7 @@ def test_ensure_log_stream_exists_access_denied(mock_time, mock_boto3_client, mo
 
 
 @patch('time.time', return_value=1234567890)
-def test_refresh_sequence_token_success(mock_time, mock_boto3_client):
+def test_refresh_sequence_token_success(mock_time, mock_boto3_client, mock_credentials):
     """Test successful sequence token refresh."""
     with patch('awslabs.aws_api_mcp_server.core.common.cloudwatch_logger.boto3') as mock_boto3:
         mock_client = Mock()
@@ -163,7 +202,7 @@ def test_refresh_sequence_token_success(mock_time, mock_boto3_client):
 
 
 @patch('time.time', return_value=1234567890)
-def test_write_success(mock_time, mock_boto3_client):
+def test_write_success(mock_time, mock_boto3_client, mock_credentials):
     """Test successful log message writing."""
     with patch('awslabs.aws_api_mcp_server.core.common.cloudwatch_logger.boto3') as mock_boto3:
         mock_client = Mock()
@@ -183,7 +222,7 @@ def test_write_success(mock_time, mock_boto3_client):
 
 
 @patch('time.time', return_value=1234567890)
-def test_write_with_sequence_token(mock_time, mock_boto3_client):
+def test_write_with_sequence_token(mock_time, mock_boto3_client, mock_credentials):
     """Test writing with sequence token."""
     with patch('awslabs.aws_api_mcp_server.core.common.cloudwatch_logger.boto3') as mock_boto3:
         mock_client = Mock()
@@ -206,7 +245,7 @@ def test_write_with_sequence_token(mock_time, mock_boto3_client):
 
 
 @patch('time.time', return_value=1234567890)
-def test_write_invalid_sequence_token_retry(mock_time, mock_boto3_client):
+def test_write_invalid_sequence_token_retry(mock_time, mock_boto3_client, mock_credentials):
     """Test writing with invalid sequence token and retry."""
     with patch('awslabs.aws_api_mcp_server.core.common.cloudwatch_logger.boto3') as mock_boto3:
         mock_client = Mock()
@@ -234,7 +273,7 @@ def test_write_invalid_sequence_token_retry(mock_time, mock_boto3_client):
 
 
 @patch('time.time', return_value=1234567890)
-def test_write_data_already_accepted(mock_time, mock_boto3_client):
+def test_write_data_already_accepted(mock_time, mock_boto3_client, mock_credentials):
     """Test writing when data is already accepted."""
     with patch('awslabs.aws_api_mcp_server.core.common.cloudwatch_logger.boto3') as mock_boto3:
         mock_client = Mock()
@@ -257,7 +296,7 @@ def test_write_data_already_accepted(mock_time, mock_boto3_client):
 
 
 @patch('time.time', return_value=1234567890)
-def test_write_other_error(mock_time, mock_boto3_client):
+def test_write_other_error(mock_time, mock_boto3_client, mock_credentials):
     """Test writing with other error."""
     with patch('awslabs.aws_api_mcp_server.core.common.cloudwatch_logger.boto3') as mock_boto3:
         mock_client = Mock()
@@ -276,7 +315,7 @@ def test_write_other_error(mock_time, mock_boto3_client):
 
 
 @patch('time.time', return_value=1234567890)
-def test_thread_safety(mock_time, mock_boto3_client):
+def test_thread_safety(mock_time, mock_boto3_client, mock_credentials):
     """Test thread safety of the sink."""
     import queue
     import threading
