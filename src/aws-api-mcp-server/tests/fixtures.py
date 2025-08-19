@@ -263,7 +263,7 @@ def patch_boto3():
         return False
 
     with patch(
-        'awslabs.aws_api_mcp_server.core.aws.credentials.get_local_credentials',
+        'awslabs.aws_api_mcp_server.core.aws.driver.get_local_credentials',
         return_value=Credentials(**TEST_CREDENTIALS),
     ):
         with patch('botocore.client.BaseClient._make_api_call', new=mock_make_api_call):
