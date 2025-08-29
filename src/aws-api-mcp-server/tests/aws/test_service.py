@@ -4,18 +4,17 @@ from ..history_handler import history
 from awslabs.aws_api_mcp_server.core.aws.driver import translate_cli_to_ir
 from awslabs.aws_api_mcp_server.core.aws.service import (
     execute_awscli_customization,
-    get_local_credentials,
     interpret_command,
     is_operation_read_only,
     validate,
 )
+from awslabs.aws_api_mcp_server.core.common.command import IRCommand
 from awslabs.aws_api_mcp_server.core.common.helpers import as_json
 from awslabs.aws_api_mcp_server.core.common.models import (
     AwsApiMcpServerErrorResponse,
     AwsCliAliasResponse,
     CommandMetadata,
     Context,
-    Credentials,
     InterpretationMetadata,
     InterpretationResponse,
     IRTranslation,
@@ -24,7 +23,6 @@ from awslabs.aws_api_mcp_server.core.common.models import (
 )
 from awslabs.aws_api_mcp_server.core.metadata.read_only_operations_list import ReadOnlyOperations
 from botocore.config import Config
-from botocore.exceptions import NoCredentialsError
 from tests.fixtures import (
     CLOUD9_DESCRIBE_ENVIRONMENTS,
     CLOUD9_LIST_ENVIRONMENTS,
@@ -34,9 +32,11 @@ from tests.fixtures import (
     CLOUD9_PARAMS_MISSING_CONTEXT_FAILURES,
     EC2_DESCRIBE_INSTANCES,
     GET_CALLER_IDENTITY_PAYLOAD,
+    LAMBDA_INVOKE_PAYLOAD,
+    S3_GET_OBJECT_PAYLOAD,
     SSM_LIST_NODES_PAYLOAD,
     T2_EC2_DESCRIBE_INSTANCES_FILTERED,
-    TEST_CREDENTIALS,
+    create_file_open_mock,
     patch_boto3,
 )
 from typing import Any
@@ -56,11 +56,8 @@ from unittest.mock import MagicMock, patch
 )
 def test_interpret_returns_validation_failures(cli_command, reason, service, operation):
     """Test that interpret_command returns validation failures for invalid operations."""
-    credentials = Credentials(**TEST_CREDENTIALS)
     response = interpret_command(
         cli_command=cli_command,
-        credentials=credentials,
-        default_region='us-east-1',
     )
     assert response.response is None
     assert response.validation_failures == [
@@ -80,11 +77,8 @@ def test_interpret_returns_validation_failures(cli_command, reason, service, ope
 
 def test_interpret_returns_missing_context_failures():
     """Test that interpret_command returns missing context failures when required parameters are missing."""
-    credentials = Credentials(**TEST_CREDENTIALS)
     response = interpret_command(
         cli_command=CLOUD9_PARAMS_CLI_MISSING_CONTEXT,
-        credentials=credentials,
-        default_region='us-east-1',
     )
     assert response.response is None
     assert response.missing_context_failures == [
@@ -165,7 +159,7 @@ def test_interpret_returns_missing_context_failures():
         (
             'aws sts get-caller-identity',
             GET_CALLER_IDENTITY_PAYLOAD,
-            ('GetCallerIdentity', {}, 'us-east-1', 10, 'https://sts.amazonaws.com'),
+            ('GetCallerIdentity', {}, 'us-east-1', 10, 'https://sts.us-east-1.amazonaws.com'),
             'sts',
             'AWS Security Token Service',
             'GetCallerIdentity',
@@ -200,11 +194,11 @@ def test_interpret_returns_valid_response(
 ):
     """Test that interpret_command returns a valid response for correct CLI commands."""
     with patch_boto3():
-        history.events.clear()
-        credentials = Credentials(**TEST_CREDENTIALS)
-        response = interpret_command(
-            cli_command=cli, default_region='us-east-1', credentials=credentials
-        )
+        with patch(
+            'awslabs.aws_api_mcp_server.core.parser.parser.get_region', return_value='us-east-1'
+        ):
+            history.events.clear()
+            response = interpret_command(cli_command=cli)
         assert response == ProgramInterpretationResponse(
             response=InterpretationResponse(json=as_json(output), error=None, status_code=200),
             failed_constraints=[],
@@ -218,19 +212,18 @@ def test_interpret_returns_valid_response(
         assert event in history.events
 
 
-def test_interpret_injects_region():
+@patch('awslabs.aws_api_mcp_server.core.parser.parser.get_region')
+def test_interpret_injects_region(mock_get_region):
     """Test that interpret_command injects the correct region into the request."""
     region = 'eu-south-1'
+    mock_get_region.return_value = region
     default_config = Config(region_name=region)
     with patch_boto3():
         with patch('awslabs.aws_api_mcp_server.core.parser.interpretation.Config') as patch_config:
             history.events.clear()
             patch_config.return_value = default_config
-            credentials = Credentials(**TEST_CREDENTIALS)
             response = interpret_command(
                 cli_command='aws cloud9 describe-environments --environment-ids 7d61007bd98b4d589f1504af84c168de b181ffd35fe2457c8c5ae9d75edc068a',
-                credentials=credentials,
-                default_region=region,
             )
             assert response.metadata == InterpretationMetadata(
                 service='cloud9',
@@ -273,14 +266,14 @@ def test_interpret_injects_region():
 def test_region_picked_up_from_arn(cli, region):
     """Test that region is correctly picked up from ARN in the CLI command."""
     with patch_boto3():
-        credentials = Credentials(**TEST_CREDENTIALS)
-        response = interpret_command(
-            cli_command=cli,
-            default_region='us-east-1',
-            credentials=credentials,
-        )
-        assert response.metadata is not None
-        assert response.metadata.region_name == region
+        with patch(
+            'awslabs.aws_api_mcp_server.core.parser.parser.get_region', return_value='us-east-1'
+        ):
+            response = interpret_command(
+                cli_command=cli,
+            )
+            assert response.metadata is not None
+            assert response.metadata.region_name == region
 
 
 def test_validate_success():
@@ -455,67 +448,6 @@ def test_is_operation_read_only_raises_error_for_missing_operation_name():
         is_operation_read_only(ir, read_only_operations)
 
 
-@patch('awslabs.aws_api_mcp_server.core.aws.service.AWS_API_MCP_PROFILE_NAME', 'test')
-@patch('awslabs.aws_api_mcp_server.core.aws.service.boto3.Session')
-def test_get_local_credentials_success_with_aws_mcp_profile(mock_session_class):
-    """Test get_local_credentials returns credentials when available."""
-    mock_session = MagicMock()
-    mock_session_class.return_value = mock_session
-
-    mock_credentials = MagicMock()
-    mock_credentials.access_key = 'test-access-key'
-    mock_credentials.secret_key = 'test-secret-key'  # pragma: allowlist secret
-    mock_credentials.token = 'test-session-token'
-
-    mock_session.get_credentials.return_value = mock_credentials
-
-    result = get_local_credentials()
-
-    assert isinstance(result, Credentials)
-    assert result.access_key_id == 'test-access-key'
-    assert result.secret_access_key == 'test-secret-key'  # pragma: allowlist secret
-    assert result.session_token == 'test-session-token'
-    mock_session_class.assert_called_once_with(profile_name='test')
-    mock_session.get_credentials.assert_called_once()
-
-
-@patch('awslabs.aws_api_mcp_server.core.aws.service.boto3.Session')
-def test_get_local_credentials_success_with_default_creds(mock_session_class):
-    """Test get_local_credentials returns credentials when available."""
-    mock_session = MagicMock()
-    mock_session_class.return_value = mock_session
-
-    mock_credentials = MagicMock()
-    mock_credentials.access_key = 'test-access-key'
-    mock_credentials.secret_key = 'test-secret-key'  # pragma: allowlist secret
-    mock_credentials.token = 'test-session-token'
-
-    mock_session.get_credentials.return_value = mock_credentials
-
-    result = get_local_credentials()
-
-    assert isinstance(result, Credentials)
-    assert result.access_key_id == 'test-access-key'
-    assert result.secret_access_key == 'test-secret-key'  # pragma: allowlist secret
-    assert result.session_token == 'test-session-token'
-    mock_session_class.assert_called_once()
-    mock_session.get_credentials.assert_called_once()
-
-
-@patch('awslabs.aws_api_mcp_server.core.aws.service.boto3.Session')
-def test_get_local_credentials_raises_no_credentials_error(mock_session_class):
-    """Test get_local_credentials raises NoCredentialsError when credentials are None."""
-    mock_session = MagicMock()
-    mock_session_class.return_value = mock_session
-    mock_session.get_credentials.return_value = None
-
-    with pytest.raises(NoCredentialsError):
-        get_local_credentials()
-
-    mock_session_class.assert_called_once()
-    mock_session.get_credentials.assert_called_once()
-
-
 @patch('awslabs.aws_api_mcp_server.core.aws.service.driver')
 def test_execute_awscli_customization_success(mock_driver):
     """Test execute_awscli_customization returns AwsCliAliasResponse on successful execution."""
@@ -528,7 +460,10 @@ def test_execute_awscli_customization_success(mock_driver):
         mock_stderr.getvalue.return_value = ''
         mock_stringio.side_effect = [mock_stdout, mock_stderr]
 
-        result = execute_awscli_customization('aws s3 ls')
+        cli_command = 'aws s3 ls'
+        ir_command = translate_cli_to_ir(cli_command).command
+        assert ir_command is not None
+        result = execute_awscli_customization(cli_command, ir_command)
 
         assert isinstance(result, AwsCliAliasResponse)
         assert result.response == 'bucket1\nbucket2\n'
@@ -542,7 +477,15 @@ def test_execute_awscli_customization_error(mock_driver):
     """Test execute_awscli_customization returns AwsApiMcpServerErrorResponse on exception."""
     mock_driver.main.side_effect = Exception('Invalid command')
 
-    result = execute_awscli_customization('aws invalid command')
+    result = execute_awscli_customization(
+        'aws invalid command',
+        IRCommand(
+            command_metadata=CommandMetadata('invalid', None, 'command'),
+            region='us-east-1',
+            parameters={},
+            is_awscli_customization=True,
+        ),
+    )
 
     assert isinstance(result, AwsApiMcpServerErrorResponse)
     assert result.error is True
@@ -555,7 +498,11 @@ def test_execute_awscli_customization_error(mock_driver):
 @patch('awslabs.aws_api_mcp_server.core.aws.service.AWS_API_MCP_PROFILE_NAME', None)
 def test_profile_not_added_when_env_var_none(mock_main):
     """Test that profile is not added when AWS_API_MCP_PROFILE_NAME is None."""
-    execute_awscli_customization('aws s3 ls')
+    cli_command = 'aws s3 ls'
+    ir_command = translate_cli_to_ir(cli_command).command
+    assert ir_command is not None
+
+    execute_awscli_customization(cli_command, ir_command)
 
     # Verify profile was not added to args
     args = mock_main.call_args[0][0]
@@ -566,7 +513,11 @@ def test_profile_not_added_when_env_var_none(mock_main):
 @patch('awslabs.aws_api_mcp_server.core.aws.service.AWS_API_MCP_PROFILE_NAME', 'test-profile')
 def test_profile_added_when_env_var_set(mock_main):
     """Test that profile is added when AWS_API_MCP_PROFILE_NAME is set."""
-    execute_awscli_customization('aws s3 ls')
+    cli_command = 'aws s3 ls'
+    ir_command = translate_cli_to_ir(cli_command).command
+    assert ir_command is not None
+
+    execute_awscli_customization(cli_command, ir_command)
 
     # Verify profile was added to args
     args = mock_main.call_args[0][0]
@@ -577,12 +528,68 @@ def test_profile_added_when_env_var_set(mock_main):
 
 @patch('awslabs.aws_api_mcp_server.core.aws.service.driver.main')
 @patch('awslabs.aws_api_mcp_server.core.aws.service.AWS_API_MCP_PROFILE_NAME', 'test-profile')
-def test_profile_not_added_if_present_for_customizations(mock_main):
+@patch('awslabs.aws_api_mcp_server.core.parser.parser.get_region', return_value='us-east-1')
+def test_profile_not_added_if_present_for_customizations(mock_get_region, mock_main):
     """Test that profile is not added when one is already present."""
-    execute_awscli_customization('aws s3 ls --profile different')
+    cli_command = 'aws s3 ls --profile different'
+    ir_command = translate_cli_to_ir(cli_command).command
+    assert ir_command is not None
+
+    execute_awscli_customization(cli_command, ir_command)
 
     # Verify profile was added to args
     args = mock_main.call_args[0][0]
     assert '--profile' in args
     profile_index = args.index('--profile')
     assert args[profile_index + 1] == 'different'
+
+
+@pytest.mark.parametrize(
+    'command,expected_outfile,expected_content',
+    [
+        (
+            'aws s3api get-object --bucket test-bucket --key test-key /tmp/myfile.template',
+            '/tmp/myfile.template',
+            S3_GET_OBJECT_PAYLOAD['Body'].content,
+        ),
+        (
+            'aws lambda invoke --function-name my-function /tmp/response.json',
+            '/tmp/response.json',
+            LAMBDA_INVOKE_PAYLOAD['Payload'].content,
+        ),
+    ],
+)
+def test_interpret_command_creates_output_file_for_streaming_operations(
+    command, expected_outfile, expected_content
+):
+    """Test that interpret_command writes an output file for streaming operations with outfile parameter."""
+    with patch_boto3():
+        mock_open_side_effect, mock_files = create_file_open_mock(expected_outfile)
+
+        with patch('builtins.open', side_effect=mock_open_side_effect):
+            response = interpret_command(cli_command=command)
+
+            assert response.response is not None
+            assert response.response.status_code == 200
+
+            mock_file = mock_files[expected_outfile]
+            mock_file.write.assert_called_with(expected_content)
+
+            assert response.response.as_json is not None
+            response_data = json.loads(response.response.as_json)
+
+            assert 'Body' not in response_data
+            assert 'Payload' not in response_data
+
+
+@pytest.mark.parametrize(
+    'command',
+    [
+        'aws s3api get-object --bucket test-bucket --key test-key relative/path/file.txt',
+        'aws lambda invoke --function-name my-function response.json',
+    ],
+)
+def test_validate_output_file_raises_error_for_relative_paths(command):
+    """Test that _validate_output_file raises ValueError for streaming operations with relative paths."""
+    with pytest.raises(ValueError, match=r'.* should be an aboslute path'):
+        interpret_command(cli_command=command)
