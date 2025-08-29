@@ -1,421 +1,318 @@
-# DynamoDB MCP Server - Evaluation Framework
+# DynamoDB MCP Evaluation System
 
-A comprehensive evaluation framework for testing DynamoDB data modeling guidance using DSPy and Amazon Bedrock models.
+A comprehensive evaluation framework for assessing DynamoDB data modeling guidance quality using advanced conversational AI and structured evaluation methodologies.
 
-## 🚀 Quick Start
+## Overview
+
+This evaluation system combines realistic conversational interactions with sophisticated quality assessment to evaluate the effectiveness of DynamoDB modeling guidance. It uses a three-layer architecture integrating Strands agents, MCP protocol, and DSPy evaluation engines to provide objective, systematic assessment of both modeling process quality and technical design excellence.
+
+### Key Features
+
+- **Realistic Conversations**: Uses Strands agents with MCP protocol for authentic user-expert interactions
+- **Dual Evaluation Framework**: Separately assesses modeling process (HOW) and design quality (WHAT)
+- **Expert Knowledge Integration**: Leverages DynamoDB architect prompt for domain-specific evaluation
+- **Comprehensive Scoring**: 10-dimensional assessment covering methodology and technical excellence
+- **Multiple Scenarios**: Predefined scenarios across different complexity levels and domains
+- **Performance Monitoring**: Detailed timing analysis and efficiency metrics
+
+### Dual Evaluation Framework
+
+**Session Evaluation** - Assesses the modeling process quality:
+- Requirements Engineering (1-10)
+- Access Pattern Analysis (1-10)
+- Methodology Adherence (1-10)
+- Technical Reasoning (1-10)
+- Process Documentation (1-10)
+
+**Model Evaluation** - Assesses the technical design quality:
+- Completeness (1-10)
+- Technical Accuracy (1-10)
+- Access Pattern Coverage (1-10)
+- Scalability Considerations (1-10)
+- Cost Optimization (1-10)
+
+## Quick Start
 
 ### Prerequisites
 
-1. **AWS Credentials**: Configure AWS access for Bedrock
-   ```bash
-   export AWS_PROFILE=Bedrock
-   # OR
-   export AWS_ACCESS_KEY_ID=your_key_id
-   export AWS_SECRET_ACCESS_KEY=your_secret_key
-   export AWS_DEFAULT_REGION=us-east-1
-   ```
+1. **AWS Credentials**: Configure AWS access with Bedrock permissions
+```bash
+export AWS_PROFILE=your-profile
+export AWS_REGION=us-east-1
+# OR
+export AWS_ACCESS_KEY_ID=your-key
+export AWS_SECRET_ACCESS_KEY=your-secret
+```
 
-2. **Dependencies**: Ensure you're in the dynamodb-mcp-server directory with uv installed
+2. **Python Environment**: Python 3.10+ with uv package manager
+```bash
+# Install uv if not already installed
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Navigate to the DynamoDB MCP server directory
+cd src/dynamodb-mcp-server
+```
+
+3. **Dependencies**: Install required packages
+```bash
+uv sync
+```
 
 ### Basic Usage
 
-```bash
-# Run validation tests
-uv run python simple_model_test.py
-
-# Run basic evaluation with default model
-uv run python test_dspy_evals.py
-
-# Run with specific model
-uv run python test_dspy_evals.py --model bedrock/us.anthropic.claude-3-5-haiku-20241022-v1:0
-
-# Run comprehensive evaluation
-uv run python test_dspy_evals.py --comprehensive
-
-# Compare multiple models
-uv run python test_dspy_evals.py --multi-model
-
-# Show help
-uv run python test_dspy_evals.py --help
-```
-
-## 📋 Framework Components
-
-### Core Files
-
-| File | Purpose |
-|------|---------|
-| `test_dspy_evals.py` | Main test runner with command-line interface |
-| `multiturn_evaluator.py` | Enhanced 2-turn conversation evaluator |
-| `basic_evaluator.py` | DSPy-based evaluation with scoring |
-| `scenarios.py` | Rich test scenarios with detailed requirements |
-| `multi_model_evaluator.py` | Multi-model comparison framework |
-
-### Helper Scripts
-
-| File | Purpose |
-|------|---------|
-| `simple_model_test.py` | Basic validation and import testing |
-| `test_model_parameter.py` | Model parameter functionality testing |
-| `example_multi_model.py` | Multi-model evaluation examples |
-| `show_comprehensive_message.py` | Demo of context enhancement |
-
-## 🎯 Key Features
-
-### 1. Comprehensive Context Enhancement
-
-**Problem Solved**: Models asking additional questions instead of providing complete DynamoDB guidance.
-
-**Solution**: Enhanced Turn 2 prompt with **13.1x more context** (2,704 characters vs 206 characters).
-
-**Before (Turn 2)**:
-```
-"I need to design a DynamoDB schema for an e-commerce application..."
-```
-
-**After (Turn 2)**:
-```
-ORIGINAL REQUEST: [user request]
-
-APPLICATION DETAILS:
-• Type: E-commerce platform
-• Domain: Online retail
-• Primary Function: Enable users to browse products...
-
-ENTITIES & RELATIONSHIPS:
-Entities:
-• Users: Customer accounts with profile information...
-• Products: Items available for purchase...
-
-ACCESS PATTERNS:
-Read Patterns:
-• Get user profile by user ID (very frequent)
-• List user's order history with pagination (frequent)
-
-PERFORMANCE & SCALE REQUIREMENTS:
-• User Base: 1000 active users
-• Transaction Volume: 100 orders per day
-• Performance Requirements:
-  - Product browsing: <5ms DynamoDB response time
-
-INSTRUCTIONS:
-Based on this comprehensive requirements specification, provide complete DynamoDB schema design guidance.
-Do not ask additional questions - provide complete guidance now.
-```
-
-### 2. Multi-Model Support
-
-Compare performance across different Bedrock models:
-
-- **Claude 3.5 Sonnet v2**: `bedrock/us.anthropic.claude-3-5-sonnet-20241022-v2:0`
-- **Claude 3.5 Haiku**: `bedrock/us.anthropic.claude-3-5-haiku-20241022-v1:0`
-- **Claude 3 Sonnet**: `bedrock/us.anthropic.claude-3-sonnet-20240229-v1:0`
-- **Titan Text Premier**: `bedrock/us.amazon.titan-text-premier-v1:0`
-
-### 3. Rich Test Scenarios
-
-#### Simple E-commerce Schema (Beginner)
-- Users, Products, Orders, OrderItems
-- 1000 users, 100 orders/day
-- Standard e-commerce access patterns
-
-#### High-Scale Social Media Platform (Advanced)
-- Users, Posts, Likes, Comments
-- 100k+ users, 10k+ interactions/minute
-- Hot partition mitigation required
-
-#### Content Management System (Beginner)
-- Authors, Articles, Categories, Comments
-- 5000 page views/day, 50 articles/month
-- Content organization and publishing
-
-## 📊 Evaluation Metrics
-
-### Technical Scores (1-10)
-- **Schema Design Quality**: Table structure, key design, relationships
-- **Access Pattern Coverage**: How well guidance addresses access patterns
-- **Cost Optimization**: Cost-aware recommendations
-- **Scalability Design**: Hot partition analysis, scaling strategies
-- **Best Practices Adherence**: DynamoDB best practices compliance
-
-### Implementation Scores (1-10)
-- **Actionability**: How implementable the guidance is
-- **Completeness**: Coverage of all requirements
-- **Clarity**: Understandability of explanations
-- **Trade-off Explanation**: Discussion of design trade-offs
-
-### Practical Scores (1-10)
-- **Scenario Fit**: Appropriateness for the use case
-- **Complexity Appropriateness**: Right level of detail for user experience
-
-## 🔧 Usage Examples
-
-### Basic Single Model Evaluation
+Run a basic evaluation with default settings:
 
 ```bash
-# Test with Claude 3.5 Haiku
-uv run python test_dspy_evals.py --model bedrock/us.anthropic.claude-3-5-haiku-20241022-v1:0
+uv run python tests/evals/test_dspy_evals.py
 ```
 
-**Sample Output**:
-```json
-{
-  "status": "success",
-  "scenarios_evaluated": 2,
-  "overall_performance": {
-    "average_score": 8.2,
-    "score_distribution": {
-      "excellent": 1,
-      "good": 1,
-      "acceptable": 0,
-      "poor": 0
-    }
-  },
-  "technical_performance": {
-    "overall_technical_average": 8.1
-  }
-}
+This will:
+- Use the default model: `bedrock/us.anthropic.claude-sonnet-4-20250514-v1:0`
+- Run the "Simple E-commerce Schema" scenario
+- Execute the complete evaluation pipeline
+- Display comprehensive results
+
+### Sample Output
+
+```
+🔧 EVALUATION CONFIGURATION
+==============================
+Model: bedrock/us.anthropic.claude-3-5-sonnet-20241022-v2:0
+Scenario: Simple E-commerce Schema
+
+✅ DSPy configured with bedrock/us.anthropic.claude-3-5-sonnet-20241022-v2:0
+🎯 Testing scenario complexity: beginner
+🔄 Running conversation for scenario: Simple E-commerce Schema
+...
+✅ Conversation completed in 61.20s
+🔄 Running DSPy session evaluation...
+✅ Session evaluation completed in 11.61s
+📊 Session Score: 8.40 (good)
+🔄 Running DSPy model evaluation...
+✅ Model evaluation completed in 12.12s
+📊 Model Score: 8.20 (good)
+🎯 Complete evaluation finished in 84.93s
+
+============================================================
+COMPREHENSIVE EVALUATION RESULTS
+============================================================
+⏱️  Total Duration: 84.93s
+   • Conversation: 61.20s
+   • Session Evaluation: 11.61s
+   • Model Evaluation: 12.12s
+
+📋 SESSION EVALUATION (Requirements & Methodology)
+--------------------------------------------------
+🎯 Overall Session Score: 8.40 (good)
+
+📊 Detailed Session Scores:
+   • Requirements Engineering: 9.0/10
+   • Access Pattern Analysis: 8.0/10
+   • Methodology Adherence: 8.0/10
+   • Technical Reasoning: 8.0/10
+   • Process Documentation: 9.0/10
+
+🏗️  MODEL EVALUATION (Technical Design)
+--------------------------------------------------
+🎯 Overall Model Score: 8.20 (good)
+
+📊 Detailed Model Scores:
+   • Completeness: 9.0/10
+   • Technical Accuracy: 8.0/10
+   • Access Pattern Coverage: 9.0/10
+   • Scalability Considerations: 8.0/10
+   • Cost Optimization: 7.0/10
+
+🎖️  QUALITY SUMMARY
+--------------------------------------------------
+Session Quality: good
+Model Quality: good
 ```
 
-### Multi-Model Comparison
+## Command Line Usage
+
+### Available Commands
+
+**Basic evaluation:**
+```bash
+uv run python tests/evals/test_dspy_evals.py
+```
+
+**Custom model evaluation:**
+```bash
+uv run python tests/evals/test_dspy_evals.py --model "bedrock/us.anthropic.claude-3-5-sonnet-20241022-v2:0"
+```
+
+**Specific scenario testing:**
+```bash
+uv run python tests/evals/test_dspy_evals.py --scenario "High-Scale Social Media Platform"
+```
+
+**Combined configuration:**
+```bash
+uv run python tests/evals/test_dspy_evals.py --model "custom-model" --scenario "Content Management System"
+```
+
+**List available scenarios:**
+```bash
+uv run python tests/evals/test_dspy_evals.py --list-scenarios
+```
+
+### Command Line Options
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--model` | Bedrock model ID to use | `bedrock/us.anthropic.claude-sonnet-4-20250514-v1:0` |
+| `--scenario` | Scenario name to evaluate | `"Simple E-commerce Schema"` |
+| `--list-scenarios` | Show all available scenarios | - |
+| `--debug` | Show raw JSON output | - |
+
+## Available Scenarios
+
+The system includes predefined scenarios across different complexity levels:
+
+### Beginner Scenarios
+- **Simple E-commerce Schema**: Basic online retail with users, products, orders
+- **Content Management System**: Blog/CMS with articles, authors, categories
+
+### Advanced Scenarios  
+- **High-Scale Social Media Platform**: Social media with posts, likes, comments at scale
+
+### Scenario Structure
+
+Each scenario includes:
+- **Application Details**: Type, domain, business model
+- **Entities & Relationships**: Complete data model definition
+- **Access Patterns**: Read/write patterns with performance requirements
+- **Scale Requirements**: User base, transaction volume, growth projections
+- **Performance Targets**: Latency and throughput specifications
+
+To see all scenarios with descriptions:
+```bash
+uv run python tests/evals/test_dspy_evals.py --list-scenarios
+```
+
+## Understanding Results
+
+### Quality Levels
+
+Results are classified into quality levels based on overall scores:
+
+| Score Range | Quality Level | Description |
+|-------------|---------------|-------------|
+| 8.5 - 10.0 | `excellent` | Exceptional quality - ready for production |
+| 7.0 - 8.4 | `good` | Solid quality - minor improvements needed |
+| 5.5 - 6.9 | `acceptable` | Adequate - meets basic requirements |
+| 4.0 - 5.4 | `needs_improvement` | Deficient - significant gaps present |
+| 1.0 - 3.9 | `poor` | Major issues - substantial rework required |
+
+### Performance Characteristics
+
+Typical evaluation timing:
+- **Conversation Phase**: 30-60 seconds (depends on model and scenario complexity)
+- **Session Evaluation**: 10-15 seconds (DSPy process assessment)
+- **Model Evaluation**: 10-15 seconds (DSPy design assessment)
+- **Total Duration**: 50-90 seconds for complete pipeline
+
+### Session vs Model Evaluation
+
+**Session Evaluation** focuses on **HOW** the modeling was conducted:
+- Did the system follow proper methodology?
+- Were requirements properly gathered and analyzed?
+- Was the decision-making process well-documented?
+- Were trade-offs and alternatives considered?
+
+**Model Evaluation** focuses on **WHAT** was delivered:
+- Is the final design technically correct?
+- Does it handle all required access patterns?
+- Are scalability concerns addressed?
+- Is the solution cost-optimized?
+
+## Configuration
+
+### Model Selection
+
+The system supports any Bedrock-compatible model. Popular choices:
 
 ```bash
-# Compare Claude models
-uv run python test_dspy_evals.py --multi-model
+# Claude 4 Sonnet (recommended)
+--model "bedrock/us.anthropic.claude-sonnet-4-20250514-v1:0"
+
+# Claude 3.5 Sonnet
+--model "bedrock/us.anthropic.claude-3-5-sonnet-20241022-v2:0"
+
+# Other Bedrock models
+--model "bedrock/amazon.titan-text-premier-v1:0"
 ```
 
-**Sample Output**:
-```json
-{
-  "performance_comparison": {
-    "ranking": [
-      {"model": "claude-3.5-sonnet-v2", "score": 8.5},
-      {"model": "claude-3.5-haiku", "score": 8.2},
-      {"model": "claude-3-sonnet", "score": 7.9}
-    ],
-    "top_performer": "claude-3.5-sonnet-v2"
-  }
-}
-```
+### Environment Variables
 
-### Custom Model List
+| Variable | Purpose | Default |
+|----------|---------|---------|
+| `AWS_PROFILE` | AWS credential profile | - |
+| `AWS_REGION` | AWS region for Bedrock | `us-east-1` |
+| `AWS_ACCESS_KEY_ID` | Direct AWS credentials | - |
+| `AWS_SECRET_ACCESS_KEY` | Direct AWS credentials | - |
 
-```python
-from multi_model_evaluator import MultiModelEvaluator
-from scenarios import get_scenario_by_complexity
-
-# Define custom models
-models = [
-    "bedrock/us.anthropic.claude-3-5-sonnet-20241022-v2:0",
-    "bedrock/us.amazon.titan-text-premier-v1:0"
-]
-
-# Run evaluation
-evaluator = MultiModelEvaluator(models)
-scenarios = get_scenario_by_complexity("beginner")
-results = evaluator.evaluate_all_models(scenarios)
-```
-
-## 🧪 Testing and Validation
-
-### Run All Validation Tests
-
-```bash
-# Basic framework validation
-uv run python simple_model_test.py
-
-# Model parameter testing
-uv run python test_model_parameter.py
-
-# Multi-model examples (without AWS credentials)
-uv run python example_multi_model.py
-```
-
-### Expected Validation Output
-
-```
-🧪 Simple Model Test - Validation Suite
-==================================================
-
-[Basic Imports]
-  ✅ basic_evaluator: All items available
-  ✅ scenarios: All items available
-  ✅ multiturn_evaluator: All items available
-  ✅ multi_model_evaluator: All items available
-  ✅ test_dspy_evals: All items available
-
-[Scenario Data]
-✅ Found 3 test scenarios
-  ✅ Simple E-commerce Schema: Complete structure
-  ✅ High-Scale Social Media Platform: Complete structure
-  ✅ Content Management System: Complete structure
-
-[Model Configuration]
-  ✅ Evaluator created with configuration status: False
-  ✅ Found 4 Claude models available
-
-[Score Extraction]
-  ✅ 'Score: 8.5/10' → 8.5 (correct)
-  ✅ 'Rating: 7.2 out of 10' → 7.2 (correct)
-
-Overall: 4/4 tests passed
-🎉 All validation tests passed!
-```
-
-## 🎛️ Command Line Options
-
-```bash
-uv run python test_dspy_evals.py [options]
-
-Options:
-  (no option)           Run basic evaluation with single model
-  --comprehensive       Run comprehensive evaluation with all scenarios  
-  --multi-model         Run evaluation across multiple Claude models
-  --claude-comparison   Same as --multi-model (alias)
-  --model MODEL_NAME    Specify Bedrock model to use
-  --help               Show help message
-
-Examples:
-  uv run python test_dspy_evals.py
-  uv run python test_dspy_evals.py --model bedrock/us.anthropic.claude-3-5-haiku-20241022-v1:0
-  uv run python test_dspy_evals.py --comprehensive
-  uv run python test_dspy_evals.py --multi-model
-```
-
-## 🔬 Framework Architecture
-
-### 2-Turn Conversation Flow
-
-1. **Turn 1**: Minimal prompt → Model asks clarifying questions
-2. **Turn 2**: Comprehensive requirements → Model provides complete guidance
-
-### Evaluation Pipeline
-
-```
-Scenario → MultiTurnEvaluator → 2-Turn Conversation → DSPy Evaluation → Scores
-```
-
-### Multi-Model Architecture
-
-```
-Scenarios → MultiModelEvaluator → [Model1, Model2, Model3] → Comparison Report
-```
-
-## 🛠️ Development and Extension
-
-### Adding New Scenarios
-
-Edit `scenarios.py`:
-
-```python
-new_scenario = {
-    "name": "Your Scenario Name",
-    "user_input": "Basic user request...",
-    "complexity": "beginner|intermediate|advanced",
-    "application_details": {
-        "type": "Application type",
-        "domain": "Domain area"
-    },
-    "entities_and_relationships": {
-        "entities": {"Entity1": "Description"},
-        "relationships": ["Entity1 → Entity2 (1:many)"]
-    },
-    "access_patterns": {
-        "read_patterns": ["Pattern 1", "Pattern 2"],
-        "write_patterns": ["Pattern 3", "Pattern 4"] 
-    },
-    "performance_and_scale": {
-        "user_base": "Scale info",
-        "performance_requirements": ["Requirement 1"]
-    }
-}
-
-BASIC_SCENARIOS.append(new_scenario)
-```
-
-### Adding New Models
-
-Edit `multi_model_evaluator.py`:
-
-```python
-# Add to COMMON_BEDROCK_MODELS
-new_models = [
-    "bedrock/us.meta.llama3-70b-instruct-v1:0",
-    "bedrock/cohere.command-r-plus-v1:0"
-]
-
-# Add display name mapping
-model_mappings = {
-    "bedrock/us.meta.llama3-70b-instruct-v1:0": "llama-3-70b",
-    "bedrock/cohere.command-r-plus-v1:0": "command-r-plus"
-}
-```
-
-## 📈 Performance Benchmarks
-
-### Typical Evaluation Times
-
-- **Single Model, Single Scenario**: 15-30 seconds
-- **Single Model, All Scenarios**: 45-90 seconds  
-- **Multi-Model (4 models), Basic Scenarios**: 2-4 minutes
-
-### Model Performance Patterns
-
-Based on testing:
-
-1. **Claude 3.5 Sonnet v2**: Highest scores, most comprehensive guidance
-2. **Claude 3.5 Haiku**: Fast, good quality, cost-effective
-3. **Claude 3 Sonnet**: Solid performance, detailed explanations
-4. **Titan Text Premier**: Different style, competitive scores
-
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Common Issues
 
-**"AWS credentials not available"**
+**AWS Credentials Error:**
+```
+AWS credentials not available - set AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY or AWS_PROFILE
+```
+**Solution**: Configure AWS credentials as shown in Prerequisites section.
+
+**Model Access Error:**
+```
+Could not access the model: bedrock/model-name
+```
+**Solution**: Ensure your AWS account has access to the requested Bedrock model and proper permissions.
+
+**Scenario Not Found:**
+```
+Scenario 'Invalid Name' not found
+```
+**Solution**: Use `--list-scenarios` to see available options and check spelling.
+
+**MCP Connection Issues:**
+```
+Error during Strands conversation: MCP connection failed
+```
+**Solution**: Ensure the DynamoDB MCP server is properly installed and accessible.
+
+### Extending the System
+
+**Adding New Scenarios:**
+1. Add scenario definition to `scenarios.py`
+2. Include all required fields (entities, access patterns, scale)
+3. Test with different models for consistency
+
+**Custom Evaluation Dimensions:**
+1. Update `evaluation_config.py` with new dimensions
+2. Modify DSPy signatures in `dspy_evaluators.py`
+3. Update scoring algorithms and result structures
+
+**New Model Support:**
+1. Ensure model is available in AWS Bedrock
+2. Test compatibility with DSPy framework
+3. Adjust timeout settings if needed
+
+## Development and Contributing
+
+### Running Tests
+
 ```bash
-# Set credentials
-export AWS_PROFILE=Bedrock
-# OR
-export AWS_ACCESS_KEY_ID=xxx
-export AWS_SECRET_ACCESS_KEY=xxx
+# Run a quick evaluation
+uv run python tests/evals/test_dspy_evals.py
+
+# Test different models
+uv run python tests/evals/test_dspy_evals.py --model "bedrock/us.anthropic.claude-3-5-sonnet-20241022-v2:0"
+
+# Test all scenarios
+for scenario in "Simple E-commerce Schema" "High-Scale Social Media Platform" "Content Management System"; do
+  uv run python tests/evals/test_dspy_evals.py --scenario "$scenario"
+done
 ```
 
-**"Module not found" errors**
-```bash
-# Run from correct directory
-cd src/dynamodb-mcp-server/tests/evals
-uv run python test_dspy_evals.py
-```
-
-**"DSPy configuration failed"**
-- Check AWS credentials have Bedrock access
-- Verify model ID is correct and available in your region
-- Check AWS region is set (default: us-east-1)
-
-### Debug Mode
-
-For detailed debugging, modify the evaluator:
-
-```python
-# In multiturn_evaluator.py
-import logging
-logging.basicConfig(level=logging.DEBUG)
-```
-
-## 📜 License
-
-This evaluation framework is part of the DynamoDB MCP Server project and follows the same licensing terms.
-
-## 🤝 Contributing
-
-1. Add new test scenarios for different use cases
-2. Implement additional evaluation metrics
-3. Support for more Bedrock models
-4. Performance optimizations for faster evaluation
-
-## 📚 References
-
-- [DSPy Documentation](https://dspy-docs.vercel.app/)
-- [Amazon Bedrock Models](https://docs.aws.amazon.com/bedrock/latest/userguide/models-supported.html)
-- [DynamoDB Best Practices](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/best-practices.html)
