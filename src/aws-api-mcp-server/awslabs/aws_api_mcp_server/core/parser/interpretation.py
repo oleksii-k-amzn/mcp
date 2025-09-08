@@ -20,6 +20,7 @@ from ..aws.services import (
 )
 from ..common.command import IRCommand, OutputFile
 from ..common.config import (
+    CLOUDWATCH_LOG_GROUP_NAME,
     ENABLE_AGENT_SCRIPTS,
     OPT_IN_TELEMETRY,
     READ_OPERATIONS_ONLY_MODE,
@@ -105,6 +106,7 @@ def _get_user_agent_extra() -> str:
     user_agent_extra += f' cfg/ro#{"1" if READ_OPERATIONS_ONLY_MODE else "0"}'
     user_agent_extra += f' cfg/consent#{"1" if REQUIRE_MUTATION_CONSENT else "0"}'
     user_agent_extra += f' cfg/scripts#{"1" if ENABLE_AGENT_SCRIPTS else "0"}'
+    user_agent_extra += f' cfg/cw#{"1" if CLOUDWATCH_LOG_GROUP_NAME else "0"}'
     return user_agent_extra
 
 
