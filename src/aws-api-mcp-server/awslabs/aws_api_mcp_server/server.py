@@ -27,9 +27,12 @@ from .core.common.config import (
     DEFAULT_REGION,
     ENABLE_AGENT_SCRIPTS,
     FASTMCP_LOG_LEVEL,
+    HOST,
+    PORT,
     READ_ONLY_KEY,
     READ_OPERATIONS_ONLY_MODE,
     REQUIRE_MUTATION_CONSENT,
+    TRANSPORT,
     WORKING_DIRECTORY,
 )
 from .core.common.errors import AwsApiMcpError
@@ -51,7 +54,7 @@ from typing import Annotated, Any, Optional
 
 
 initialize_logger()
-server = FastMCP(name='AWS-API-MCP', log_level=FASTMCP_LOG_LEVEL)
+server = FastMCP(name='AWS-API-MCP', log_level=FASTMCP_LOG_LEVEL, host=HOST, port=PORT)
 READ_OPERATIONS_INDEX: Optional[ReadOnlyOperations] = None
 
 
@@ -367,7 +370,7 @@ def main():
         READ_OPERATIONS_INDEX = None
 
     logger.info('Server is ready to accept requests.')
-    server.run(transport='stdio')
+    server.run(transport=TRANSPORT)
 
 
 if __name__ == '__main__':
