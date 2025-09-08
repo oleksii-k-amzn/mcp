@@ -27,12 +27,9 @@ from .core.common.config import (
     DEFAULT_REGION,
     ENABLE_AGENT_SCRIPTS,
     FASTMCP_LOG_LEVEL,
-    HOST,
-    PORT,
     READ_ONLY_KEY,
     READ_OPERATIONS_ONLY_MODE,
     REQUIRE_MUTATION_CONSENT,
-    TRANSPORT,
     WORKING_DIRECTORY,
 )
 from .core.common.errors import AwsApiMcpError
