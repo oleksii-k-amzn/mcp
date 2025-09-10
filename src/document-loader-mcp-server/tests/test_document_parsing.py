@@ -97,9 +97,9 @@ class DocumentTestGenerator:
 
     def __init__(self, output_dir: str = 'tests/sample_docs'):
         """Initialize the sample document generator.
-        
+
         Args:
-            output_dir: Directory to store generated sample documents
+            output_dir (str): Directory to store generated sample documents.
         """
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)

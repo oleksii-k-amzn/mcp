@@ -145,10 +145,10 @@ def read_image(file_path: str) -> Image:
         # Create and return Image object using FastMCP's Image helper
         return Image(path=file_path)
 
-    except FileNotFoundError as e:
-        raise FileNotFoundError(str(e))
+    except FileNotFoundError:
+        raise
     except Exception as e:
-        raise Exception(f'Error loading image {file_path}: {str(e)}')
+        raise RuntimeError(f'Error loading image {file_path}: {str(e)}') from e
 
 
 def main():
