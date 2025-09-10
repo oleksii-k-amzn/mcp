@@ -228,8 +228,11 @@ class DocumentTestGenerator:
         headers = ['Name', 'Age', 'Department', 'Salary', 'Start Date']
         for col, header in enumerate(headers, 1):
             cell = ws.cell(row=1, column=col, value=header)
-            cell.font = Font(bold=True)
-            cell.fill = PatternFill(start_color='CCCCCC', end_color='CCCCCC', fill_type='solid')
+            if cell:
+                cell.font = Font(bold=True)
+                cell.fill = PatternFill(
+                    start_color='CCCCCC', end_color='CCCCCC', fill_type='solid'
+                )
 
         # Add test data
         test_data = [
@@ -242,7 +245,7 @@ class DocumentTestGenerator:
 
         for row, record in enumerate(test_data, 2):
             for col, value in enumerate(record, 1):
-                ws.cell(row=row, column=col, value=value)
+                cell = ws.cell(row=row, column=col, value=value)
 
         # Add a summary sheet
         ws2 = wb.create_sheet('Summary')
@@ -286,8 +289,10 @@ class DocumentTestGenerator:
         title = slide.shapes.title
         subtitle = slide.placeholders[1]
 
-        title.text = 'Test Presentation'
-        subtitle.text = 'Document Loader MCP Server Testing\nGenerated for validation purposes'
+        if title and hasattr(title, 'text'):
+            title.text = 'Test Presentation'
+        if subtitle and hasattr(subtitle, 'text'):
+            subtitle.text = 'Document Loader MCP Server Testing\nGenerated for validation purposes'
 
         # Slide 2: Content slide
         slide_layout = prs.slide_layouts[1]  # Title and content layout
@@ -295,8 +300,10 @@ class DocumentTestGenerator:
         title = slide.shapes.title
         content = slide.placeholders[1]
 
-        title.text = 'Testing Features'
-        content.text = """• PDF document parsing
+        if title and hasattr(title, 'text'):
+            title.text = 'Testing Features'
+        if content and hasattr(content, 'text'):
+            content.text = """• PDF document parsing
 • Word document processing
 • Excel spreadsheet conversion
 • PowerPoint presentation extraction
@@ -309,8 +316,10 @@ class DocumentTestGenerator:
         title = slide.shapes.title
         content = slide.placeholders[1]
 
-        title.text = 'Test Data Validation'
-        content.text = """Validation Criteria:
+        if title and hasattr(title, 'text'):
+            title.text = 'Test Data Validation'
+        if content and hasattr(content, 'text'):
+            content.text = """Validation Criteria:
 • Content extraction accuracy
 • Format preservation
 • Multi-sheet/slide support
@@ -323,8 +332,10 @@ class DocumentTestGenerator:
         title = slide.shapes.title
         content = slide.placeholders[1]
 
-        title.text = 'Expected Results'
-        content.text = """This test validates:
+        if title and hasattr(title, 'text'):
+            title.text = 'Expected Results'
+        if content and hasattr(content, 'text'):
+            content.text = """This test validates:
 ✓ Multi-format document support
 ✓ Structured content extraction
 ✓ Reliable markdown conversion
@@ -335,6 +346,44 @@ Test completion indicates successful functionality!"""
         # Save the presentation
         prs.save(str(pptx_path))
         return str(pptx_path)
+
+    def generate_sample_image(self) -> str:
+        """Generate a sample image file for testing."""
+        from PIL import Image, ImageDraw, ImageFont
+
+        # Create a simple test image
+        image_path = self.output_dir / 'sample_image.png'
+
+        # Create a 400x300 image with a light blue background
+        img = Image.new('RGB', (400, 300), color='lightblue')
+        draw = ImageDraw.Draw(img)
+
+        # Add some text and shapes
+        try:
+            # Try to use a default font, fall back to basic if not available
+            font = ImageFont.load_default()
+        except Exception:
+            font = None
+
+        # Draw some shapes and text
+        draw.rectangle([50, 50, 350, 100], fill='white', outline='black', width=2)
+        draw.text((60, 65), 'Document Loader MCP Server', fill='black', font=font)
+        draw.text((60, 85), 'Test Image Generation', fill='black', font=font)
+
+        # Draw some geometric shapes
+        draw.ellipse([50, 120, 150, 220], fill='yellow', outline='orange', width=3)
+        draw.rectangle([200, 120, 300, 220], fill='lightgreen', outline='darkgreen', width=3)
+        draw.polygon([(325, 120), (375, 170), (325, 220), (275, 170)], fill='pink', outline='red')
+
+        # Add some test information
+        draw.text((50, 240), 'Generated for MCP testing', fill='darkblue', font=font)
+        draw.text(
+            (50, 260), f'Size: {img.size[0]}x{img.size[1]} pixels', fill='darkblue', font=font
+        )
+
+        # Save the image
+        img.save(str(image_path), 'PNG')
+        return str(image_path)
 
 
 def test_pdf_parsing(document_generator):
