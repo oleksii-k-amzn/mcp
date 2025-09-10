@@ -80,13 +80,9 @@ dev = [
     { name = "pytest" },
     { name = "pytest-asyncio" },
     { name = "pytest-cov" },
-    { name = "ruff" },
-]
-test = [
-    { name = "pytest" },
-    { name = "pytest-asyncio" },
     { name = "python-docx" },
     { name = "reportlab" },
+    { name = "ruff" },
 ]
 
 [package.metadata]
@@ -104,13 +100,9 @@ dev = [
     { name = "pytest", specifier = ">=7.0.0" },
     { name = "pytest-asyncio", specifier = ">=0.21.0" },
     { name = "pytest-cov", specifier = ">=4.1.0" },
-    { name = "ruff", specifier = ">=0.9.7" },
-]
-test = [
-    { name = "pytest", specifier = ">=7.0.0" },
-    { name = "pytest-asyncio", specifier = ">=0.21.0" },
     { name = "python-docx", specifier = ">=1.1.0" },
     { name = "reportlab", specifier = ">=4.0.0" },
+    { name = "ruff", specifier = ">=0.9.7" },
 ]
 
 [[package]]
