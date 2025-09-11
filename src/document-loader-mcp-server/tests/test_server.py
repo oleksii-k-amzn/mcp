@@ -31,12 +31,11 @@ async def test_server():
 
         tool_names = []
         for tool in tools:
-            if hasattr(tool, 'name') and hasattr(tool.name, 'strip'):
-                print(f'- {tool.name}: {getattr(tool, "description", "No description")}')
-                tool_names.append(str(tool.name))
-            elif hasattr(tool, 'name'):
-                print(f'- {tool.name}: {getattr(tool, "description", "No description")}')
-                tool_names.append(str(tool.name))
+            if hasattr(tool, 'name'):
+                tool_name = getattr(tool, 'name')
+                tool_desc = getattr(tool, 'description', 'No description')
+                print(f'- {tool_name}: {tool_desc}')
+                tool_names.append(str(tool_name))
             else:
                 print(f'- {tool}: {type(tool)}')
                 tool_names.append(str(tool))
@@ -71,8 +70,9 @@ async def call_mcp_tool(tool_name: str, *args, **kwargs):
     print(f'Tool attributes: {dir(tool)}')
 
     # Call the tool function using the 'fn' attribute
-    if hasattr(tool, 'fn'):
-        return tool.fn(*args, **kwargs)
+    if hasattr(tool, 'fn') and callable(getattr(tool, 'fn')):
+        fn = getattr(tool, 'fn')
+        return fn(*args, **kwargs)
     else:
         raise ValueError(f'Cannot find callable function for tool {tool_name}')
 

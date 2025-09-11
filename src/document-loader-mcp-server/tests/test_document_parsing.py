@@ -228,11 +228,8 @@ class DocumentTestGenerator:
         headers = ['Name', 'Age', 'Department', 'Salary', 'Start Date']
         for col, header in enumerate(headers, 1):
             cell = ws.cell(row=1, column=col, value=header)
-            if cell:
-                cell.font = Font(bold=True)
-                cell.fill = PatternFill(
-                    start_color='CCCCCC', end_color='CCCCCC', fill_type='solid'
-                )
+            cell.font = Font(bold=True)
+            cell.fill = PatternFill(start_color='CCCCCC', end_color='CCCCCC', fill_type='solid')
 
         # Add test data
         test_data = [
@@ -245,7 +242,7 @@ class DocumentTestGenerator:
 
         for row, record in enumerate(test_data, 2):
             for col, value in enumerate(record, 1):
-                cell = ws.cell(row=row, column=col, value=value)
+                ws.cell(row=row, column=col, value=value)
 
         # Add a summary sheet
         ws2 = wb.create_sheet('Summary')
@@ -289,9 +286,9 @@ class DocumentTestGenerator:
         title = slide.shapes.title
         subtitle = slide.placeholders[1]
 
-        if title and hasattr(title, 'text'):
+        if title and hasattr(title, 'text_frame'):
             title.text = 'Test Presentation'
-        if subtitle and hasattr(subtitle, 'text'):
+        if subtitle and hasattr(subtitle, 'text_frame'):
             subtitle.text = 'Document Loader MCP Server Testing\nGenerated for validation purposes'
 
         # Slide 2: Content slide
@@ -300,9 +297,9 @@ class DocumentTestGenerator:
         title = slide.shapes.title
         content = slide.placeholders[1]
 
-        if title and hasattr(title, 'text'):
+        if title and hasattr(title, 'text_frame'):
             title.text = 'Testing Features'
-        if content and hasattr(content, 'text'):
+        if content and hasattr(content, 'text_frame'):
             content.text = """• PDF document parsing
 • Word document processing
 • Excel spreadsheet conversion
@@ -316,9 +313,9 @@ class DocumentTestGenerator:
         title = slide.shapes.title
         content = slide.placeholders[1]
 
-        if title and hasattr(title, 'text'):
+        if title and hasattr(title, 'text_frame'):
             title.text = 'Test Data Validation'
-        if content and hasattr(content, 'text'):
+        if content and hasattr(content, 'text_frame'):
             content.text = """Validation Criteria:
 • Content extraction accuracy
 • Format preservation
@@ -332,9 +329,9 @@ class DocumentTestGenerator:
         title = slide.shapes.title
         content = slide.placeholders[1]
 
-        if title and hasattr(title, 'text'):
+        if title and hasattr(title, 'text_frame'):
             title.text = 'Expected Results'
-        if content and hasattr(content, 'text'):
+        if content and hasattr(content, 'text_frame'):
             content.text = """This test validates:
 ✓ Multi-format document support
 ✓ Structured content extraction

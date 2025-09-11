@@ -30,6 +30,13 @@ classifiers = [
 [project.scripts]
 "awslabs.document-loader-mcp-server" = "awslabs.document_loader_mcp_server.server:main"
 
+[project.optional-dependencies]
+dev = [
+    "pyright>=1.1.398",
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0"
+]
+
 [project.urls]
 Homepage = "https://awslabs.github.io/mcp/"
 Documentation = "https://awslabs.github.io/mcp/servers/document-loader-mcp-server/"
@@ -123,3 +130,7 @@ exclude_dirs = ["venv","tests"]
 
 [tool.coverage.run]
 source = ["awslabs"]
+
+[tool.pyright]
+include = ["awslabs"]
+exclude = ["**/__pycache__", "**/.venv", "**/node_modules", "**/dist", "**/build"]
