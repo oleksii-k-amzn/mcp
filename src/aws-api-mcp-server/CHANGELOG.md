@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Agent script for CloudTrail Multi-Region Setup (#1320)
 - Add telemetry for AWS CLI customizations (#1335)
 - Agent Script for troubleshooting permissions using CloudTrail events (#1313)
 
